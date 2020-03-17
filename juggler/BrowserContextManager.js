@@ -77,6 +77,8 @@ class BrowserContext {
       this.userContextId = identity.userContextId;
     }
     this._principals = [];
+    // Maps origins to the permission lists.
+    this._permissions = new Map();
     this._manager._browserContextIdToBrowserContext.set(this.browserContextId, this);
     this._manager._userContextIdToBrowserContext.set(this.userContextId, this);
     this.options = options || {};
@@ -98,13 +100,7 @@ class BrowserContext {
   }
 
   grantPermissions(origin, permissions) {
-    const attrs = { userContextId: this.userContextId || undefined };
-    const principal = Services.scriptSecurityManager.createContentPrincipal(NetUtil.newURI(origin), attrs);
-    this._principals.push(principal);
-    for (const permission of ALL_PERMISSIONS) {
-      const action = permissions.includes(permission) ? Ci.nsIPermissionManager.ALLOW_ACTION : Ci.nsIPermissionManager.DENY_ACTION;
-      Services.perms.addFromPrincipal(principal, permission, action, Ci.nsIPermissionManager.EXPIRE_NEVER, 0 /* expireTime */);
-    }
+    this._permissions.set(origin, permissions);
   }
 
   resetPermissions() {
@@ -113,6 +109,25 @@ class BrowserContext {
         Services.perms.removeFromPrincipal(principal, permission);
     }
     this._principals = [];
+    this._permissions.clear();
+  }
+
+  grantPermissionsToOrigin(url) {
+    let origin = Array.from(this._permissions.keys()).find(key => url.startsWith(key));
+    if (!origin)
+      origin = '*';
+
+    const permissions = this._permissions.get(origin);
+    if (!permissions)
+      return;
+
+    const attrs = { userContextId: this.userContextId || undefined };
+    const principal = Services.scriptSecurityManager.createContentPrincipal(NetUtil.newURI(url), attrs);
+    this._principals.push(principal);
+    for (const permission of ALL_PERMISSIONS) {
+      const action = permissions.includes(permission) ? Ci.nsIPermissionManager.ALLOW_ACTION : Ci.nsIPermissionManager.DENY_ACTION;
+      Services.perms.addFromPrincipal(principal, permission, action, Ci.nsIPermissionManager.EXPIRE_NEVER, 0 /* expireTime */);
+    }
   }
 
   setCookies(cookies) {

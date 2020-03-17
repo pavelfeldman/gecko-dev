@@ -55,11 +55,10 @@ class TargetRegistry {
     Services.obs.addObserver(this, 'oop-frameloader-crashed');
   }
 
-  async ensurePermissionsInContextPages(browserContextId, permissions) {
+  pageTargets(browserContextId) {
     const browserContext = this._contextManager.browserContextForId(browserContextId);
     const pageTargets = [...this._targets.values()].filter(target => target instanceof PageTarget);
-    const contextPages = pageTargets.filter(target => target._browserContext === browserContext);
-    await Promise.all(contextPages.map(page => page._channel.connect('').send('ensurePermissions', permissions).catch(e => void e)));
+    return pageTargets.filter(target => target._browserContext === browserContext);
   }
 
   async newPage({browserContextId}) {
@@ -157,10 +156,16 @@ class PageTarget {
     this._registry = registry;
     this._tab = tab;
     this._browserContext = browserContext;
+    this._url = '';
     this._openerId = opener ? opener.id() : undefined;
     this._channel = SimpleChannel.createForMessageManager(`browser::page[${this._targetId}]`, tab.linkedBrowser.messageManager);
 
+    const navigationListener = {
+      QueryInterface: ChromeUtils.generateQI([ Ci.nsIWebProgressListener]),
+      onLocationChange: (aWebProgress, aRequest, aLocation) => this._onNavigated(aLocation),
+    };
     this._eventListeners = [
+      helper.addProgressListener(tab.linkedBrowser, navigationListener, Ci.nsIWebProgress.NOTIFY_LOCATION),
       helper.addMessageListener(tab.linkedBrowser.messageManager, 'juggler:content-ready', {
         receiveMessage: () => this._onContentReady()
       }),
@@ -219,6 +224,15 @@ class PageTarget {
       browserContextId: this._browserContext ? this._browserContext.browserContextId : undefined,
       openerId: this._openerId,
     };
+  }
+
+  _onNavigated(aLocation) {
+    this._url = aLocation.spec;
+    this._browserContext.grantPermissionsToOrigin(this._url);
+  }
+
+  async ensurePermissions(permissions) {
+    await this._channel.connect('').send('ensurePermissions', permissions).catch(e => void e);
   }
 
   dispose() {

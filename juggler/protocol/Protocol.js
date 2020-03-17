@@ -258,9 +258,7 @@ const Browser = {
       params: {
         origin: t.String,
         browserContextId: t.Optional(t.String),
-        permissions: t.Array(t.Enum([
-          'geo', 'microphone', 'camera', 'desktop-notifications'
-        ])),
+        permissions: t.Array(t.String),
       },
     },
     'resetPermissions': {

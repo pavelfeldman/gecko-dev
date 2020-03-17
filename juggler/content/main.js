@@ -11,7 +11,7 @@ const ALL_PERMISSIONS = [
   'geo',
   'microphone',
   'camera',
-  'desktop-notifications',
+  'desktop-notification',
 ];
 
 const scrollbarManager = new ScrollbarManager(docShell);

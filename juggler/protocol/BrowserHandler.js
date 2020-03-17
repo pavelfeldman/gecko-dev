@@ -115,8 +115,17 @@ class BrowserHandler {
   }
 
   async grantPermissions({browserContextId, origin, permissions}) {
-    this._contextManager.browserContextForId(browserContextId).grantPermissions(origin, permissions);
-    await this._targetRegistry.ensurePermissionsInContextPages(browserContextId, permissions);
+    const browserContext = this._contextManager.browserContextForId(browserContextId);
+    browserContext.grantPermissions(origin, permissions);
+    const contextPages = this._targetRegistry.pageTargets(browserContextId);
+    const promises = [];
+    for (const page of contextPages) {
+      if (origin === '*' || page._url.startsWith(origin)) {
+        browserContext.grantPermissionsToOrigin(page._url);
+        promises.push(page.ensurePermissions(permissions));
+      }
+    }
+    await Promise.all(promises);
   }
 
   resetPermissions({browserContextId}) {
