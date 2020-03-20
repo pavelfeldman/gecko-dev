@@ -1309,6 +1309,7 @@ class nsDocShell final : public nsDocLoader,
   bool mCSSErrorReportingEnabled : 1;
   bool mFileInputInterceptionEnabled: 1;
   bool mBypassCSPEnabled : 1;
+  nsString mLanguageOverride;
   RefPtr<nsGeolocationService> mGeolocationOverrideService;
   bool mAllowAuth : 1;
   bool mAllowKeywordFixup : 1;

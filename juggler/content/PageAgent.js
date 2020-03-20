@@ -174,6 +174,7 @@ class PageAgent {
         setFileInputFiles: this._setFileInputFiles.bind(this),
         setInterceptFileChooserDialog: this._setInterceptFileChooserDialog.bind(this),
         setGeolocationOverride: this._setGeolocationOverride.bind(this),
+        setLanguageOverride: this._setLanguageOverride.bind(this),
       }),
     ];
     this._enabled = false;
@@ -334,6 +335,10 @@ class PageAgent {
     } else {
       this._docShell.setGeolocationOverride(null);
     }
+  }
+
+  _setLanguageOverride({ language }) {
+    this._docShell.languageOverride = language;
   }
 
   _linkClicked(sync, anchorElement) {

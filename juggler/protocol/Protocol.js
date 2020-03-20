@@ -724,6 +724,11 @@ const Page = {
         longitude: t.Optional(t.Number),
         accuracy: t.Optional(t.Number)
       }
+    },
+    'setLanguageOverride': {
+      params: {
+        language: t.String,
+      }
     }
   },
 };

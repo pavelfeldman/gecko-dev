@@ -3393,6 +3393,19 @@ bool nsDocShell::IsBypassCSPEnabled() {
 }
 
 NS_IMETHODIMP
+nsDocShell::GetLanguageOverride(nsAString& aLanguageOverride) {
+  MOZ_ASSERT(aEnabled);
+  aLanguageOverride = mLanguageOverride;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDocShell::SetLanguageOverride(const nsAString& aLanguageOverride) {
+  mLanguageOverride = aLanguageOverride;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 nsDocShell::GetFileInputInterceptionEnabled(bool* aEnabled) {
   MOZ_ASSERT(aEnabled);
   *aEnabled = mFileInputInterceptionEnabled;

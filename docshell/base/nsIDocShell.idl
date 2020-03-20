@@ -1138,5 +1138,7 @@ interface nsIDocShell : nsIDocShellTreeItem
 
   attribute boolean bypassCSPEnabled;
 
+  attribute AString languageOverride;
+
   void setGeolocationOverride(in nsIDOMGeoPosition position);
 };
