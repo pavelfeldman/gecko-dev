@@ -13,6 +13,7 @@
 #include "Units.h"
 #include "jsapi.h"
 #include "mozilla/BasePrincipal.h"
+#include "mozilla/dom/Geolocation.h"
 #include "mozilla/HalScreenConfiguration.h"
 #include "mozilla/LinkedList.h"
 #include "mozilla/Maybe.h"
@@ -486,6 +487,8 @@ class nsDocShell final : public nsDocLoader,
   void FilePickerShown(mozilla::dom::Element* element);
 
   bool IsBypassCSPEnabled();
+
+  RefPtr<nsGeolocationService> GetGeolocationOverrideService();
 
   // Create a content viewer within this nsDocShell for the given
   // `WindowGlobalChild` actor.
@@ -1306,6 +1309,7 @@ class nsDocShell final : public nsDocLoader,
   bool mCSSErrorReportingEnabled : 1;
   bool mFileInputInterceptionEnabled: 1;
   bool mBypassCSPEnabled : 1;
+  RefPtr<nsGeolocationService> mGeolocationOverrideService;
   bool mAllowAuth : 1;
   bool mAllowKeywordFixup : 1;
   bool mIsOffScreenBrowser : 1;

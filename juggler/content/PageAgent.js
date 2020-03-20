@@ -173,6 +173,7 @@ class PageAgent {
         setEmulatedMedia: this._setEmulatedMedia.bind(this),
         setFileInputFiles: this._setFileInputFiles.bind(this),
         setInterceptFileChooserDialog: this._setInterceptFileChooserDialog.bind(this),
+        setGeolocationOverride: this._setGeolocationOverride.bind(this),
       }),
     ];
     this._enabled = false;
@@ -313,6 +314,25 @@ class PageAgent {
 
   _setInterceptFileChooserDialog({enabled}) {
     this._docShell.fileInputInterceptionEnabled = !!enabled;
+  }
+
+  _setGeolocationOverride({ latitude, longitude, accuracy }) {
+    if (latitude !== undefined && longitude !== undefined) {
+      this._docShell.setGeolocationOverride({
+        coords: {
+          latitude,
+          longitude,
+          accuracy,
+          altitude: NaN,
+          altitudeAccuracy: NaN,
+          heading: NaN,
+          speed: NaN,
+        },
+        address: null,
+        timestamp: Date.now()
+      });
+    } else
+      this._docShell.geolocationOverride = null;
   }
 
   _linkClicked(sync, anchorElement) {

@@ -53,6 +53,7 @@
 #include "mozilla/dom/ContentFrameMessageManager.h"
 #include "mozilla/dom/DocGroup.h"
 #include "mozilla/dom/Element.h"
+#include "mozilla/dom/Geolocation.h"
 #include "mozilla/dom/HTMLAnchorElement.h"
 #include "mozilla/dom/PerformanceNavigation.h"
 #include "mozilla/dom/PermissionMessageUtils.h"
@@ -3413,6 +3414,24 @@ void nsDocShell::FilePickerShown(mozilla::dom::Element* element) {
       mozilla::services::GetObserverService();
   observerService->NotifyObservers(
       ToSupports(element), "juggler-file-picker-shown", nullptr);
+}
+
+RefPtr<nsGeolocationService> nsDocShell::GetGeolocationOverrideService() {
+  return mGeolocationOverrideService;
+}
+
+NS_IMETHODIMP
+nsDocShell::SetGeolocationOverride(nsIDOMGeoPosition* aGeolocationOverride) {
+  if (aGeolocationOverride) {
+    if (!mGeolocationOverrideService) {
+      mGeolocationOverrideService = new nsGeolocationService();
+      mGeolocationOverrideService->Init();
+    }
+    mGeolocationOverrideService->Update(aGeolocationOverride);
+  } else {
+    mGeolocationOverrideService = nullptr;
+  }
+  return NS_OK;
 }
 
 NS_IMETHODIMP

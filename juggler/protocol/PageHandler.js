@@ -287,6 +287,11 @@ class PageHandler {
       throw new Error('ERROR: cannot find worker with id ' + workerId);
     return await worker.sendMessage(JSON.parse(message));
   }
+
+  async setGeolocationOverride(options) {
+    return await this._contentPage.send('setGeolocationOverride', options);
+  }
+
 }
 
 class Dialog {

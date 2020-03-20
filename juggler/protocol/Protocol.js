@@ -718,6 +718,13 @@ const Page = {
         message: t.String,
       },
     },
+    'setGeolocationOverride': {
+      params: {
+        latitude: t.Optional(t.Number),
+        longitude: t.Optional(t.Number),
+        accuracy: t.Optional(t.Number)
+      }
+    }
   },
 };
 

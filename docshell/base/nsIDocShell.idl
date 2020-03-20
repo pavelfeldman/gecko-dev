@@ -44,6 +44,7 @@ interface nsIURI;
 interface nsIChannel;
 interface nsIContentViewer;
 interface nsIContentSecurityPolicy;
+interface nsIDOMGeoPosition;
 interface nsIDocShellLoadInfo;
 interface nsIEditor;
 interface nsIEditingSession;
@@ -1136,4 +1137,6 @@ interface nsIDocShell : nsIDocShellTreeItem
   attribute boolean fileInputInterceptionEnabled;
 
   attribute boolean bypassCSPEnabled;
+
+  void setGeolocationOverride(in nsIDOMGeoPosition position);
 };
