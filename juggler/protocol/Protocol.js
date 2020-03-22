@@ -304,6 +304,12 @@ const Browser = {
         cookies: t.Array(browserTypes.Cookie),
       },
     },
+    'setOnlineOverride': {
+      params: {
+        browserContextId: t.Optional(t.String),
+        override: t.Optional(t.Enum(['online', 'offline'])),
+      }
+    },
   },
 };
 

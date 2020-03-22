@@ -355,6 +355,7 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
       mCSSErrorReportingEnabled(false),
       mFileInputInterceptionEnabled(false),
       mBypassCSPEnabled(false),
+      mOnlineOverride(nsIDocShell::ONLINE_OVERRIDE_NONE),
       mAllowAuth(mItemType == typeContent),
       mAllowKeywordFixup(false),
       mIsOffScreenBrowser(false),
@@ -3368,6 +3369,8 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
   return NS_OK;
 }
 
+// =============== Juggler Begin =======================
+
 nsDocShell* nsDocShell::GetRootDocShell() {
   nsCOMPtr<nsIDocShellTreeItem> rootAsItem;
   GetInProcessSameTypeRootTreeItem(getter_AddRefs(rootAsItem));
@@ -3395,7 +3398,7 @@ bool nsDocShell::IsBypassCSPEnabled() {
 NS_IMETHODIMP
 nsDocShell::GetLanguageOverride(nsAString& aLanguageOverride) {
   MOZ_ASSERT(aEnabled);
-  aLanguageOverride = mLanguageOverride;
+  aLanguageOverride = GetRootDocShell()->mLanguageOverride;
   return NS_OK;
 }
 
@@ -3408,7 +3411,7 @@ nsDocShell::SetLanguageOverride(const nsAString& aLanguageOverride) {
 NS_IMETHODIMP
 nsDocShell::GetFileInputInterceptionEnabled(bool* aEnabled) {
   MOZ_ASSERT(aEnabled);
-  *aEnabled = mFileInputInterceptionEnabled;
+  *aEnabled = GetRootDocShell()->mFileInputInterceptionEnabled;
   return NS_OK;
 }
 
@@ -3429,23 +3432,45 @@ void nsDocShell::FilePickerShown(mozilla::dom::Element* element) {
       ToSupports(element), "juggler-file-picker-shown", nullptr);
 }
 
-RefPtr<nsGeolocationService> nsDocShell::GetGeolocationOverrideService() {
-  return mGeolocationOverrideService;
+RefPtr<nsGeolocationService> nsDocShell::GetGeolocationServiceOverride() {
+  return GetRootDocShell()->mGeolocationServiceOverride;
 }
 
 NS_IMETHODIMP
 nsDocShell::SetGeolocationOverride(nsIDOMGeoPosition* aGeolocationOverride) {
   if (aGeolocationOverride) {
-    if (!mGeolocationOverrideService) {
-      mGeolocationOverrideService = new nsGeolocationService();
-      mGeolocationOverrideService->Init();
+    if (!mGeolocationServiceOverride) {
+      mGeolocationServiceOverride = new nsGeolocationService();
+      mGeolocationServiceOverride->Init();
     }
-    mGeolocationOverrideService->Update(aGeolocationOverride);
+    mGeolocationServiceOverride->Update(aGeolocationOverride);
   } else {
-    mGeolocationOverrideService = nullptr;
+    mGeolocationServiceOverride = nullptr;
   }
   return NS_OK;
 }
+
+NS_IMETHODIMP
+nsDocShell::GetOnlineOverride(OnlineOverride* aOnlineOverride) {
+  *aOnlineOverride = GetRootDocShell()->mOnlineOverride;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDocShell::SetOnlineOverride(OnlineOverride aOnlineOverride) {
+  // We don't have a way to verify this coming from Javascript, so this check is
+  // still needed.
+  if (!(aOnlineOverride == ONLINE_OVERRIDE_NONE ||
+        aOnlineOverride == ONLINE_OVERRIDE_ONLINE ||
+        aOnlineOverride == ONLINE_OVERRIDE_OFFLINE)) {
+    return NS_ERROR_INVALID_ARG;
+  }
+
+  mOnlineOverride = aOnlineOverride;
+  return NS_OK;
+}
+
+// =============== Juggler End =======================
 
 NS_IMETHODIMP
 nsDocShell::GetIsNavigating(bool* aOut) {

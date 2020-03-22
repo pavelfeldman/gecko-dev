@@ -58,13 +58,22 @@ function setGeolocationOverrideInDocShell(geolocation) {
   }
 }
 
+function setOnlineOverrideInDocShell(override) {
+  if (!override) {
+    docShell.onlineOverride = Ci.nsIDocShell.ONLINE_OVERRIDE_NONE;
+    return;
+  }
+  docShell.onlineOverride = override === 'online' ?
+      Ci.nsIDocShell.ONLINE_OVERRIDE_ONLINE : Ci.nsIDocShell.ONLINE_OVERRIDE_OFFLINE;
+}
+
 function initialize() {
   let response = sendSyncMessage('juggler:content-ready', {})[0];
   if (!response)
     response = { sessionIds: [], browserContextOptions: {}, waitForInitialNavigation: false };
 
   const { sessionIds, browserContextOptions, waitForInitialNavigation } = response;
-  const { userAgent, bypassCSP, javaScriptDisabled, viewport, scriptsToEvaluateOnNewDocument, locale, geolocation } = browserContextOptions;
+  const { userAgent, bypassCSP, javaScriptDisabled, viewport, scriptsToEvaluateOnNewDocument, locale, geolocation, onlineOverride } = browserContextOptions;
 
   if (userAgent !== undefined)
     docShell.customUserAgent = userAgent;
@@ -76,6 +85,8 @@ function initialize() {
     docShell.languageOverride = locale;
   if (geolocation !== undefined)
     setGeolocationOverrideInDocShell(geolocation);
+  if (onlineOverride !== undefined)
+    setOnlineOverrideInDocShell(onlineOverride);
   if (viewport !== undefined) {
     docShell.contentViewer.overrideDPPX = viewport.deviceScaleFactor || this._initialDPPX;
     docShell.deviceSizeIsPageSize = viewport.isMobile;
@@ -108,6 +119,10 @@ function initialize() {
 
     setGeolocationOverride(geolocation) {
       setGeolocationOverrideInDocShell(geolocation);
+    },
+
+    setOnlineOverride(override) {
+      setOnlineOverrideInDocShell(override);
     },
 
     async ensurePermissions(permissions) {

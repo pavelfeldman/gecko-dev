@@ -536,7 +536,13 @@ bool Navigator::CookieEnabled() {
   return granted;
 }
 
-bool Navigator::OnLine() { return !NS_IsOffline(); }
+bool Navigator::OnLine() {
+  nsDocShell* docShell = static_cast<nsDocShell*>(GetDocShell());
+  nsIDocShell::OnlineOverride onlineOverride;
+  if (!docShell || docShell->GetOnlineOverride(&onlineOverride) != NS_OK || onlineOverride == nsIDocShell::ONLINE_OVERRIDE_NONE)
+    return !NS_IsOffline();
+  return onlineOverride == nsIDocShell::ONLINE_OVERRIDE_ONLINE;
+}
 
 void Navigator::GetBuildID(nsAString& aBuildID, CallerType aCallerType,
                            ErrorResult& aRv) const {

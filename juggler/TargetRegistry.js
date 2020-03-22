@@ -238,6 +238,10 @@ class PageTarget {
     await this._channel.connect('').send('setGeolocationOverride', geolocation).catch(e => void e);
   }
 
+  async setOnlineOverride(override) {
+    await this._channel.connect('').send('setOnlineOverride', override).catch(e => void e);
+  }
+
   dispose() {
     if (this._browserContext)
       this._browserContext.pages.delete(this);

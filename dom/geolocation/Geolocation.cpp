@@ -745,7 +745,7 @@ already_AddRefed<nsGeolocationService>
 nsGeolocationService::GetGeolocationService(nsDocShell* docShell) {
   RefPtr<nsGeolocationService> result;
   if (docShell) {
-    result = docShell->GetGeolocationOverrideService();
+    result = docShell->GetGeolocationServiceOverride();
     if (result)
       return result.forget();
   }

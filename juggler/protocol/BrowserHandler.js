@@ -138,6 +138,10 @@ class BrowserHandler {
     await this._contextManager.browserContextForId(browserContextId).setGeolocationOverride(geolocation);
   }
 
+  async setOnlineOverride({browserContextId, override}) {
+    await this._contextManager.browserContextForId(browserContextId).setOnlineOverride(override);
+  }
+
   async addScriptToEvaluateOnNewDocument({browserContextId, script}) {
     await this._contextManager.browserContextForId(browserContextId).addScriptToEvaluateOnNewDocument(script);
   }

@@ -105,6 +105,11 @@ class BrowserContext {
     await Promise.all(Array.from(this.pages).map(page => page.setGeolocationOverride(geolocation)));
   }
 
+  async setOnlineOverride(override) {
+    this.options.onlineOverride = override;
+    await Promise.all(Array.from(this.pages).map(page => page.setOnlineOverride(override)));
+  }
+
   async grantPermissions(origin, permissions) {
     this._permissions.set(origin, permissions);
     const promises = [];

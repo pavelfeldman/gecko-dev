@@ -488,7 +488,7 @@ class nsDocShell final : public nsDocLoader,
 
   bool IsBypassCSPEnabled();
 
-  RefPtr<nsGeolocationService> GetGeolocationOverrideService();
+  RefPtr<nsGeolocationService> GetGeolocationServiceOverride();
 
   // Create a content viewer within this nsDocShell for the given
   // `WindowGlobalChild` actor.
@@ -1310,7 +1310,9 @@ class nsDocShell final : public nsDocLoader,
   bool mFileInputInterceptionEnabled: 1;
   bool mBypassCSPEnabled : 1;
   nsString mLanguageOverride;
-  RefPtr<nsGeolocationService> mGeolocationOverrideService;
+  RefPtr<nsGeolocationService> mGeolocationServiceOverride;
+  OnlineOverride mOnlineOverride;
+
   bool mAllowAuth : 1;
   bool mAllowKeywordFixup : 1;
   bool mIsOffScreenBrowser : 1;

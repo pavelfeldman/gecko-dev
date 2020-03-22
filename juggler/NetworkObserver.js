@@ -271,6 +271,8 @@ class NetworkObserver {
     const browserContext = TargetRegistry.instance().browserContextForBrowser(browser);
     if (browserContext && browserContext.options.requestInterceptionEnabled)
       return true;
+    if (browserContext && browserContext.options.onlineOverride === 'offline')
+      return true;
     return false;
   }
 
@@ -296,6 +298,13 @@ class NetworkObserver {
       interceptor._resume();
       return;
     }
+
+    const browserContext = TargetRegistry.instance().browserContextForBrowser(browser);
+    if (browserContext && browserContext.options.onlineOverride === 'offline') {
+      interceptor._abort(Cr.NS_ERROR_OFFLINE);
+      return;
+    }
+
     const interceptionEnabled = this._isInterceptionEnabledForBrowser(browser);
     this._sendOnRequest(httpChannel, !!interceptionEnabled);
     if (interceptionEnabled)

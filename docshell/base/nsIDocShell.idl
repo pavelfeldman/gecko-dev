@@ -1140,5 +1140,12 @@ interface nsIDocShell : nsIDocShellTreeItem
 
   attribute AString languageOverride;
 
+  cenum OnlineOverride: 8 {
+    ONLINE_OVERRIDE_NONE = 0,
+    ONLINE_OVERRIDE_ONLINE = 1,
+    ONLINE_OVERRIDE_OFFLINE = 2,
+  };
+  [infallible] attribute nsIDocShell_OnlineOverride onlineOverride;
+
   void setGeolocationOverride(in nsIDOMGeoPosition position);
 };
