@@ -83,6 +83,7 @@ class BrowserContext {
     this._manager._userContextIdToBrowserContext.set(this.userContextId, this);
     this.options = options || {};
     this.options.scriptsToEvaluateOnNewDocument = [];
+    this.options.bindings = [];
     this.pages = new Set();
   }
 
@@ -98,6 +99,11 @@ class BrowserContext {
   async addScriptToEvaluateOnNewDocument(script) {
     this.options.scriptsToEvaluateOnNewDocument.push(script);
     await Promise.all(Array.from(this.pages).map(page => page.addScriptToEvaluateOnNewDocument(script)));
+  }
+
+  async addBinding(name, script) {
+    this.options.bindings.push({ name, script });
+    await Promise.all(Array.from(this.pages).map(page => page.addBinding(name, script)));
   }
 
   async setGeolocationOverride(geolocation) {

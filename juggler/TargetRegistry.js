@@ -234,6 +234,10 @@ class PageTarget {
     await this._channel.connect('').send('addScriptToEvaluateOnNewDocument', script).catch(e => void e);
   }
 
+  async addBinding(name, script) {
+    await this._channel.connect('').send('addBinding', { name, script }).catch(e => void e);
+  }
+
   async setGeolocationOverride(geolocation) {
     await this._channel.connect('').send('setGeolocationOverride', geolocation).catch(e => void e);
   }

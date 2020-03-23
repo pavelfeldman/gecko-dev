@@ -146,6 +146,10 @@ class BrowserHandler {
     await this._contextManager.browserContextForId(browserContextId).addScriptToEvaluateOnNewDocument(script);
   }
 
+  async addBinding({browserContextId, name, script}) {
+    await this._contextManager.browserContextForId(browserContextId).addBinding(name, script);
+  }
+
   setCookies({browserContextId, cookies}) {
     this._contextManager.browserContextForId(browserContextId).setCookies(cookies);
   }

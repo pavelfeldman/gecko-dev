@@ -73,7 +73,7 @@ function initialize() {
     response = { sessionIds: [], browserContextOptions: {}, waitForInitialNavigation: false };
 
   const { sessionIds, browserContextOptions, waitForInitialNavigation } = response;
-  const { userAgent, bypassCSP, javaScriptDisabled, viewport, scriptsToEvaluateOnNewDocument, locale, geolocation, onlineOverride } = browserContextOptions;
+  const { userAgent, bypassCSP, javaScriptDisabled, viewport, scriptsToEvaluateOnNewDocument, bindings, locale, geolocation, onlineOverride } = browserContextOptions;
 
   if (userAgent !== undefined)
     docShell.customUserAgent = userAgent;
@@ -97,6 +97,8 @@ function initialize() {
   frameTree = new FrameTree(docShell, waitForInitialNavigation);
   for (const script of scriptsToEvaluateOnNewDocument || [])
     frameTree.addScriptToEvaluateOnNewDocument(script);
+  for (const { name, script } of bindings || [])
+    frameTree.addBinding(name, script);
   networkMonitor = new NetworkMonitor(docShell, frameTree);
 
   const channel = SimpleChannel.createForMessageManager('content::page', messageManager);
@@ -115,6 +117,10 @@ function initialize() {
 
     addScriptToEvaluateOnNewDocument(script) {
       frameTree.addScriptToEvaluateOnNewDocument(script);
+    },
+
+    addBinding(name, script) {
+      frameTree.addBinding(name, script);
     },
 
     setGeolocationOverride(geolocation) {

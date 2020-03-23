@@ -273,6 +273,13 @@ const Browser = {
         script: t.String,
       }
     },
+    'addBinding': {
+      params: {
+        browserContextId: t.Optional(t.String),
+        name: t.String,
+        script: t.String,
+      },
+    },
     'grantPermissions': {
       params: {
         origin: t.String,
@@ -559,6 +566,7 @@ const Page = {
     'addBinding': {
       params: {
         name: t.String,
+        script: t.String,
       },
     },
     'setViewportSize': {

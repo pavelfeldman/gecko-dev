@@ -18,6 +18,7 @@ class FrameTree {
       this._browsingContextGroup.__jugglerFrameTrees = new Set();
     this._browsingContextGroup.__jugglerFrameTrees.add(this);
 
+    this._bindings = new Map();
     this._workers = new Map();
     this._docShellToFrame = new Map();
     this._frameIdToFrame = new Map();
@@ -48,6 +49,7 @@ class FrameTree {
     this._eventListeners = [
       helper.addObserver(subject => this._onDocShellCreated(subject.QueryInterface(Ci.nsIDocShell)), 'webnavigation-create'),
       helper.addObserver(subject => this._onDocShellDestroyed(subject.QueryInterface(Ci.nsIDocShell)), 'webnavigation-destroy'),
+      helper.addObserver(window => this._onDOMWindowCreated(window), 'content-document-global-created'),
       helper.addProgressListener(webProgress, this, flags),
     ];
   }
@@ -109,6 +111,25 @@ class FrameTree {
 
   scriptsToEvaluateOnNewDocument() {
     return this._scriptsToEvaluateOnNewDocument;
+  }
+
+  addBinding(name, script) {
+    this._bindings.set(name, script);
+    for (const frame of this.frames())
+      this._addBindingToFrame(frame, name, script);
+  }
+
+  _addBindingToFrame(frame, name, script) {
+    Cu.exportFunction((...args) => {
+      this.emit(FrameTree.Events.BindingCalled, {
+        frame,
+        name,
+        payload: args[0]
+      });
+    }, frame.domWindow(), {
+      defineAs: name,
+    });
+    frame.domWindow().eval(script);
   }
 
   frameForDocShell(docShell) {
@@ -218,6 +239,8 @@ class FrameTree {
     const frame = new Frame(this, docShell, parentFrame);
     this._docShellToFrame.set(docShell, frame);
     this._frameIdToFrame.set(frame.id(), frame);
+    for (const [name, script] of this._bindings)
+      this._addBindingToFrame(frame, name, script);
     this.emit(FrameTree.Events.FrameAttached, frame);
     return frame;
   }
@@ -226,6 +249,16 @@ class FrameTree {
     const frame = this._docShellToFrame.get(docShell);
     if (frame)
       this._detachFrame(frame);
+  }
+
+  _onDOMWindowCreated(window) {
+    const docShell = window.docShell;
+    const frame = this.frameForDocShell(docShell);
+    if (!frame)
+      return;
+    for (const [name, script] of this._bindings)
+      this._addBindingToFrame(frame, name, script);
+    this.emit(FrameTree.Events.GlobalObjectCreated, { frame, window });
   }
 
   _detachFrame(frame) {
@@ -242,8 +275,10 @@ class FrameTree {
 }
 
 FrameTree.Events = {
+  BindingCalled: 'bindingcalled',
   FrameAttached: 'frameattached',
   FrameDetached: 'framedetached',
+  GlobalObjectCreated: 'globalobjectcreated',
   WorkerCreated: 'workercreated',
   WorkerDestroyed: 'workerdestroyed',
   NavigationStarted: 'navigationstarted',

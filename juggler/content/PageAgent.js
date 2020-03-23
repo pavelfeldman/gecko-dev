@@ -63,8 +63,6 @@ class FrameData {
       name: '',
     });
 
-    for (const bindingName of this._agent._bindingsToAdd.values())
-      this.exposeFunction(bindingName);
     for (const script of this._agent._frameTree.scriptsToEvaluateOnNewDocument()) {
       // TODO: this should actually be handled in FrameTree, but first we have to move
       // execution contexts there.
@@ -84,18 +82,6 @@ class FrameData {
       } catch (e) {
       }
     }
-  }
-
-  exposeFunction(name) {
-    Cu.exportFunction((...args) => {
-      this._agent._browserPage.emit('pageBindingCalled', {
-        executionContextId: this.mainContext.id(),
-        name,
-        payload: args[0]
-      });
-    }, this._frame.domWindow(), {
-      defineAs: name,
-    });
   }
 
   createIsolatedWorld(name) {
@@ -144,11 +130,10 @@ class PageAgent {
     this._frameData = new Map();
     this._workerData = new Map();
     this._scriptsToEvaluateOnNewDocument = new Map();
-    this._bindingsToAdd = new Set();
 
     this._eventListeners = [
       browserChannel.register(sessionId + 'page', {
-        addBinding: this._addBinding.bind(this),
+        addBinding: ({ name, script }) => this._frameTree.addBinding(name, script),
         addScriptToEvaluateOnNewDocument: this._addScriptToEvaluateOnNewDocument.bind(this),
         adoptNode: this._adoptNode.bind(this),
         awaitViewportDimensions: this._awaitViewportDimensions.bind(this),
@@ -270,13 +255,14 @@ class PageAgent {
       helper.addObserver(this._linkClicked.bind(this, false), 'juggler-link-click'),
       helper.addObserver(this._linkClicked.bind(this, true), 'juggler-link-click-sync'),
       helper.addObserver(this._filePickerShown.bind(this), 'juggler-file-picker-shown'),
-      helper.addObserver(this._onDOMWindowCreated.bind(this), 'content-document-global-created'),
       helper.addEventListener(this._messageManager, 'DOMContentLoaded', this._onDOMContentLoaded.bind(this)),
       helper.addEventListener(this._messageManager, 'pageshow', this._onLoad.bind(this)),
       helper.addObserver(this._onDocumentOpenLoad.bind(this), 'juggler-document-open-loaded'),
       helper.addEventListener(this._messageManager, 'error', this._onError.bind(this)),
+      helper.on(this._frameTree, 'bindingcalled', this._onBindingCalled.bind(this)),
       helper.on(this._frameTree, 'frameattached', this._onFrameAttached.bind(this)),
       helper.on(this._frameTree, 'framedetached', this._onFrameDetached.bind(this)),
+      helper.on(this._frameTree, 'globalobjectcreated', this._onGlobalObjectCreated.bind(this)),
       helper.on(this._frameTree, 'navigationstarted', this._onNavigationStarted.bind(this)),
       helper.on(this._frameTree, 'navigationcommitted', this._onNavigationCommitted.bind(this)),
       helper.on(this._frameTree, 'navigationaborted', this._onNavigationAborted.bind(this)),
@@ -434,11 +420,7 @@ class PageAgent {
     });
   }
 
-  _onDOMWindowCreated(window) {
-    const docShell = window.docShell;
-    const frame = this._frameTree.frameForDocShell(docShell);
-    if (!frame)
-      return;
+  _onGlobalObjectCreated({ frame }) {
     this._frameData.get(frame).reset();
   }
 
@@ -454,6 +436,15 @@ class PageAgent {
     this._frameData.delete(frame);
     this._browserPage.emit('pageFrameDetached', {
       frameId: frame.id(),
+    });
+  }
+
+  _onBindingCalled({frame, name, payload}) {
+    const frameData = this._frameData.get(frame);
+    this._browserPage.emit('pageBindingCalled', {
+      executionContextId: frameData.mainContext.id(),
+      name,
+      payload
     });
   }
 
@@ -522,14 +513,6 @@ class PageAgent {
       return {navigationId: null, navigationURL: null};
     docShell.goForward();
     return {navigationId: frame.pendingNavigationId(), navigationURL: frame.pendingNavigationURL()};
-  }
-
-  _addBinding({name}) {
-    if (this._bindingsToAdd.has(name))
-      throw new Error(`Binding with name ${name} already exists`);
-    this._bindingsToAdd.add(name);
-    for (const frameData of this._frameData.values())
-      frameData.exposeFunction(name);
   }
 
   async _adoptNode({frameId, objectId, executionContextId}) {
