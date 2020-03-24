@@ -52,6 +52,9 @@ class NetworkObserver {
     this._redirectMap = new Map();  // oldId => newId
     this._resumedRequestIdToHeaders = new Map();  // requestId => { headers }
     this._postResumeChannelIdToRequestId = new Map();  // post-resume channel id => pre-resume request id
+    this._pendingAuthentication = new Set();  // pre-auth id
+    this._postAuthChannelIdToRequestId = new Map();  // pre-auth id => post-auth id
+    this._bodyListeners = new Map();  // channel id => ResponseBodyListener.
 
     this._channelSink = {
       QueryInterface: ChromeUtils.generateQI([Ci.nsIChannelEventSink]),
@@ -133,9 +136,18 @@ class NetworkObserver {
     this._takeInterceptor(browser, requestId)._abort(errorCode);
   }
 
+  _requestAuthenticated(httpChannel) {
+    this._pendingAuthentication.add(httpChannel.channelId + '');
+  }
+
+  _requestIdBeforeAuthentication(httpChannel) {
+    const id = httpChannel.channelId + '';
+    return this._postAuthChannelIdToRequestId.has(id) ? id : undefined;
+  }
+
   _requestId(httpChannel) {
     const id = httpChannel.channelId + '';
-    return this._postResumeChannelIdToRequestId.get(id) || id;
+    return this._postResumeChannelIdToRequestId.get(id) || this._postAuthChannelIdToRequestId.get(id) || id;
   }
 
   _onRedirect(oldChannel, newChannel, flags) {
@@ -187,6 +199,8 @@ class NetworkObserver {
       return;
     if (this._isResumedChannel(httpChannel))
       return;
+    if (this._requestIdBeforeAuthentication(httpChannel))
+      return;
     this._sendOnRequestFinished(httpChannel);
   }
 
@@ -220,6 +234,16 @@ class NetworkObserver {
       // Ignore onRequest for resumed requests, but listen to their response.
       new ResponseBodyListener(this, browser, httpChannel);
       return;
+    }
+    // Convert pending auth bit into auth mapping.
+    const channelId = httpChannel.channelId + '';
+    if (this._pendingAuthentication.has(channelId)) {
+      this._postAuthChannelIdToRequestId.set(channelId, channelId + '-auth');
+      this._redirectMap.set(channelId + '-auth', channelId);
+      this._pendingAuthentication.delete(channelId);
+      const bodyListener = this._bodyListeners.get(channelId);
+      if (bodyListener)
+        bodyListener.dispose();
     }
     const browserContext = TargetRegistry.instance().browserContextForBrowser(browser);
     if (browserContext)
@@ -329,7 +353,7 @@ class NetworkObserver {
       postData: readRequestPostData(httpChannel),
       headers: requestHeaders(httpChannel),
       method: httpChannel.requestMethod,
-      navigationId: httpChannel.isMainDocumentChannel ? this._requestId(httpChannel) : undefined,
+      navigationId: httpChannel.isMainDocumentChannel ? this._requestIdBeforeAuthentication(httpChannel) || this._requestId(httpChannel) : undefined,
       cause: causeTypeToString(causeType),
     });
   }
@@ -338,7 +362,7 @@ class NetworkObserver {
     this.emit('requestfinished', httpChannel, {
       requestId: this._requestId(httpChannel),
     });
-    this._postResumeChannelIdToRequestId.delete(httpChannel.channelId + '');
+    this._cleanupChannelState(httpChannel);
   }
 
   _sendOnRequestFailed(httpChannel, error) {
@@ -346,7 +370,13 @@ class NetworkObserver {
       requestId: this._requestId(httpChannel),
       errorCode: helper.getNetworkErrorStatusText(error),
     });
-    this._postResumeChannelIdToRequestId.delete(httpChannel.channelId + '');
+    this._cleanupChannelState(httpChannel);
+  }
+
+  _cleanupChannelState(httpChannel) {
+    const id = httpChannel.channelId + '';
+    this._postResumeChannelIdToRequestId.delete(id);
+    this._postAuthChannelIdToRequestId.delete(id);
   }
 
   _onResponse(fromCache, httpChannel, topic) {
@@ -549,9 +579,16 @@ class ResponseBodyListener {
     this.QueryInterface = ChromeUtils.generateQI([Ci.nsIStreamListener]);
     httpChannel.QueryInterface(Ci.nsITraceableChannel);
     this.originalListener = httpChannel.setNewListener(this);
+    this._disposed = false;
+    this._networkObserver._bodyListeners.set(this._httpChannel.channelId + '', this);
   }
 
   onDataAvailable(aRequest, aInputStream, aOffset, aCount) {
+    if (this._disposed) {
+      this.originalListener.onDataAvailable(aRequest, aInputStream, aOffset, aCount);
+      return;      
+    }
+
     const iStream = new BinaryInputStream(aInputStream);
     const sStream = new StorageStream(8192, aCount, null);
     const oStream = new BinaryOutputStream(sStream.getOutputStream(0));
@@ -570,9 +607,18 @@ class ResponseBodyListener {
 
   onStopRequest(aRequest, aStatusCode) {
     this.originalListener.onStopRequest(aRequest, aStatusCode);
+    if (this._disposed)
+      return;
+
     const body = this._chunks.join('');
     delete this._chunks;
     this._networkObserver._onResponseFinished(this._browser, this._httpChannel, body);
+    this.dispose();
+  }
+
+  dispose() {
+    this._disposed = true;
+    this._networkObserver._bodyListeners.delete(this._httpChannel.channelId + '');
   }
 }
 
@@ -655,6 +701,7 @@ class NotificationCallbacks {
       return false;
     authInfo.username = credentials.username;
     authInfo.password = credentials.password;
+    this._networkObserver._requestAuthenticated(this._httpChannel);
     return true;
   }
 
