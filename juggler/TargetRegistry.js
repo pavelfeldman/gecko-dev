@@ -226,8 +226,8 @@ class PageTarget {
     this._browserContext.grantPermissionsToOrigin(this._url);
   }
 
-  async ensurePermissions(permissions) {
-    await this._channel.connect('').send('ensurePermissions', permissions).catch(e => void e);
+  async ensurePermissions() {
+    await this._channel.connect('').send('ensurePermissions', {}).catch(e => void e);
   }
 
   async addScriptToEvaluateOnNewDocument(script) {

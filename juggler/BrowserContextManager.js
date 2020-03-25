@@ -12,9 +12,7 @@ const HUNDRED_YEARS = 60 * 60 * 24 * 365 * 100;
 
 const ALL_PERMISSIONS = [
   'geo',
-  'microphone',
-  'camera',
-  'desktop-notifications',
+  'desktop-notification',
 ];
 
 class BrowserContextManager {
@@ -122,7 +120,7 @@ class BrowserContext {
     for (const page of this.pages) {
       if (origin === '*' || page._url.startsWith(origin)) {
         this.grantPermissionsToOrigin(page._url);
-        promises.push(page.ensurePermissions(permissions));
+        promises.push(page.ensurePermissions());
       }
     }
     await Promise.all(promises);

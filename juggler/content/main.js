@@ -6,13 +6,6 @@ const {ScrollbarManager} = ChromeUtils.import('chrome://juggler/content/content/
 const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
 const {PageAgent} = ChromeUtils.import('chrome://juggler/content/content/PageAgent.js');
 
-const ALL_PERMISSIONS = [
-  'geo',
-  'microphone',
-  'camera',
-  'desktop-notification',
-];
-
 const scrollbarManager = new ScrollbarManager(docShell);
 let frameTree;
 let networkMonitor;
@@ -127,29 +120,8 @@ function initialize() {
       setOnlineOverrideInDocShell(override);
     },
 
-    async ensurePermissions(permissions) {
-      const checkPermissions = () => {
-        for (const permission of ALL_PERMISSIONS) {
-          const actual = Services.perms.testExactPermissionFromPrincipal(this._docShell.domWindow.document.nodePrincipal, permission);
-          const expected = permissions.include(permission) ? Ci.nsIPermissionManager.ALLOW_ACTION : Ci.nsIPermissionManager.DENY_ACTION;
-          if (actual !== expected)
-            return false;
-        }
-        return true;
-      }
-
-      if (checkPermissions())
-        return;
-
-      // Track all 'perm-changed' events and wait until permissions are expected.
-      await new Promise(resolve => {
-        const listeners = [helper.addObserver(() => {
-          if (!checkPermission())
-            return;
-          helper.removeListeners(listeners);
-          resolve();
-        }, 'perm-changed')];
-      });
+    ensurePermissions() {
+      // noop, just a rountrip.
     },
 
     dispose() {
