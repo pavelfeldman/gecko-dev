@@ -184,11 +184,7 @@ class PageAgent {
       cv.stopEmulatingMedium();
     else if (type)
       cv.emulateMedium(type);
-    switch (colorScheme) {
-      case 'light': cv.emulatePrefersColorScheme(cv.PREFERS_COLOR_SCHEME_LIGHT); break;
-      case 'dark': cv.emulatePrefersColorScheme(cv.PREFERS_COLOR_SCHEME_DARK); break;
-      case 'no-preference': cv.emulatePrefersColorScheme(cv.PREFERS_COLOR_SCHEME_NO_PREFERENCE); break;
-    }
+    this._frameTree.setColorScheme(colorScheme);
   }
 
   _addScriptToEvaluateOnNewDocument({script, worldName}) {

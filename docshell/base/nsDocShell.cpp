@@ -363,6 +363,7 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
       mFileInputInterceptionEnabled(false),
       mBypassCSPEnabled(false),
       mOnlineOverride(nsIDocShell::ONLINE_OVERRIDE_NONE),
+      mColorSchemeOverride(COLOR_SCHEME_OVERRIDE_NONE),
       mAllowAuth(mItemType == typeContent),
       mAllowKeywordFixup(false),
       mIsOffScreenBrowser(false),
@@ -3498,6 +3499,18 @@ nsDocShell::SetOnlineOverride(OnlineOverride aOnlineOverride) {
   }
 
   mOnlineOverride = aOnlineOverride;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDocShell::GetColorSchemeOverride(ColorSchemeOverride* aColorSchemeOverride) {
+  *aColorSchemeOverride = GetRootDocShell()->mColorSchemeOverride;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDocShell::SetColorSchemeOverride(ColorSchemeOverride aColorSchemeOverride) {
+  mColorSchemeOverride = aColorSchemeOverride;
   return NS_OK;
 }
 

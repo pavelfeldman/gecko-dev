@@ -16122,6 +16122,20 @@ void Document::RemoveToplevelLoadingDocument(Document* aDoc) {
 }
 
 StylePrefersColorScheme Document::PrefersColorScheme() const {
+  auto* docShell = static_cast<nsDocShell*>(GetDocShell());
+  nsIDocShell::ColorSchemeOverride colorScheme;
+  if (docShell->GetColorSchemeOverride(&colorScheme) == NS_OK &&
+      colorScheme != nsIDocShell::COLOR_SCHEME_OVERRIDE_NONE) {
+    switch (colorScheme) {
+      case nsIDocShell::COLOR_SCHEME_OVERRIDE_LIGHT:
+        return StylePrefersColorScheme::Light;
+      case nsIDocShell::COLOR_SCHEME_OVERRIDE_DARK:
+        return StylePrefersColorScheme::Dark;
+      case nsIDocShell::COLOR_SCHEME_OVERRIDE_NO_PREFERENCE:
+        return StylePrefersColorScheme::NoPreference;
+    };
+  }
+
   if (nsContentUtils::ShouldResistFingerprinting(this)) {
     return StylePrefersColorScheme::Light;
   }

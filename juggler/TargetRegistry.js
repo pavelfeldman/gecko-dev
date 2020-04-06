@@ -327,6 +327,10 @@ class PageTarget {
     await this._channel.connect('').send('setOnlineOverride', override).catch(e => void e);
   }
 
+  async setColorScheme(colorScheme) {
+    await this._channel.connect('').send('setColorScheme', colorScheme).catch(e => void e);
+  }
+
   async hasFailedToOverrideTimezone() {
     return await this._channel.connect('').send('hasFailedToOverrideTimezone').catch(e => true);
   }
@@ -411,6 +415,11 @@ class BrowserContext {
   async setOnlineOverride(override) {
     this.options.onlineOverride = override;
     await Promise.all(Array.from(this.pages).map(page => page.setOnlineOverride(override)));
+  }
+
+  async setColorScheme(colorScheme) {
+    this.options.colorScheme = colorScheme;
+    await Promise.all(Array.from(this.pages).map(page => page.setColorScheme(colorScheme)));
   }
 
   async grantPermissions(origin, permissions) {

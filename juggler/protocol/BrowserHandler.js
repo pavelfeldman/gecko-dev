@@ -149,6 +149,10 @@ class BrowserHandler {
     await this._targetRegistry.browserContextForId(browserContextId).setOnlineOverride(override);
   }
 
+  async setColorScheme({browserContextId, colorScheme}) {
+    await this._targetRegistry.browserContextForId(browserContextId).setColorScheme(colorScheme);
+  }
+
   async addScriptToEvaluateOnNewDocument({browserContextId, script}) {
     await this._targetRegistry.browserContextForId(browserContextId).addScriptToEvaluateOnNewDocument(script);
   }

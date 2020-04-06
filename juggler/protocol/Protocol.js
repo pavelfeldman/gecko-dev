@@ -314,6 +314,12 @@ const Browser = {
         override: t.Optional(t.Enum(['online', 'offline'])),
       }
     },
+    'setColorScheme': {
+      params: {
+        browserContextId: t.Optional(t.String),
+        colorScheme: t.Optional(t.Enum(['dark', 'light', 'no-preference'])),
+      },
+    },
   },
 };
 

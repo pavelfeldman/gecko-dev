@@ -65,7 +65,7 @@ function initialize() {
     response = { sessionIds: [], browserContextOptions: {} };
 
   const { sessionIds, browserContextOptions } = response;
-  const { userAgent, bypassCSP, javaScriptDisabled, viewport, scriptsToEvaluateOnNewDocument, bindings, locale, timezoneId, geolocation, onlineOverride } = browserContextOptions;
+  const { userAgent, bypassCSP, javaScriptDisabled, viewport, scriptsToEvaluateOnNewDocument, bindings, locale, timezoneId, geolocation, onlineOverride, colorScheme } = browserContextOptions;
 
   let failedToOverrideTimezone = false;
   if (timezoneId)
@@ -90,6 +90,8 @@ function initialize() {
   }
 
   frameTree = new FrameTree(docShell);
+  if (colorScheme !== undefined)
+    frameTree.setColorScheme(colorScheme);
   for (const script of scriptsToEvaluateOnNewDocument || [])
     frameTree.addScriptToEvaluateOnNewDocument(script);
   for (const { name, script } of bindings || [])
@@ -124,6 +126,10 @@ function initialize() {
 
     setOnlineOverride(override) {
       setOnlineOverrideInDocShell(override);
+    },
+
+    setColorScheme(colorScheme) {
+      frameTree.setColorScheme(colorScheme);
     },
 
     ensurePermissions() {
