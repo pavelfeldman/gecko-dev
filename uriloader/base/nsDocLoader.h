@@ -202,9 +202,22 @@ class nsDocLoader : public nsIDocumentLoader,
   void FireOnLocationChange(nsIWebProgress* aWebProgress, nsIRequest* aRequest,
                             nsIURI* aUri, uint32_t aFlags);
 
+<<<<<<< HEAD
   [[nodiscard]] bool RefreshAttempted(nsIWebProgress* aWebProgress,
                                       nsIURI* aURI, int32_t aDelay,
                                       bool aSameURI);
+||||||| merged common ancestors
+  MOZ_MUST_USE bool RefreshAttempted(nsIWebProgress* aWebProgress, nsIURI* aURI,
+                                     int32_t aDelay, bool aSameURI);
+=======
+  void FireOnFrameLocationChange(nsIWebProgress* aWebProgress,
+                               nsIRequest* aRequest,
+                               nsIURI *aUri,
+                               uint32_t aFlags);
+
+  MOZ_MUST_USE bool RefreshAttempted(nsIWebProgress* aWebProgress, nsIURI* aURI,
+                                     int32_t aDelay, bool aSameURI);
+>>>>>>> chore: bootstrap build #1088
 
   // this function is overridden by the docshell, it is provided so that we
   // can pass more information about redirect state (the normal OnStateChange
