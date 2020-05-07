@@ -80,14 +80,7 @@
 #include "mozilla/dom/nsCSPContext.h"
 #include "mozilla/dom/LoadURIOptionsBinding.h"
 #include "mozilla/dom/JSWindowActorChild.h"
-<<<<<<< HEAD
-||||||| merged common ancestors
-#include "mozilla/net/DocumentChannel.h"
-=======
 #include "mozilla/dom/WorkerCommon.h"
-
-#include "mozilla/net/DocumentChannel.h"
->>>>>>> chore: bootstrap build #1088
 #include "nsSHEntry.h"
 #include "mozilla/net/DocumentChannel.h"
 #include "mozilla/net/UrlClassifierFeatureFactory.h"
@@ -12076,16 +12069,9 @@ nsresult nsDocShell::OnLinkClick(
       this, aContent, aURI, target, aFileName, aPostDataStream,
       aHeadersDataStream, noOpenerImplied, aIsUserTriggered, aIsTrusted,
       aTriggeringPrincipal, aCsp);
-<<<<<<< HEAD
-  return Dispatch(TaskCategory::UI, ev.forget());
-||||||| merged common ancestors
-  return DispatchToTabGroup(TaskCategory::UI, ev.forget());
-=======
-
   nsCOMPtr<nsIObserverService> observerService = mozilla::services::GetObserverService();
   observerService->NotifyObservers(ToSupports(aContent), "juggler-link-click", nullptr);
-  return DispatchToTabGroup(TaskCategory::UI, ev.forget());
->>>>>>> chore: bootstrap build #1088
+  return Dispatch(TaskCategory::UI, ev.forget());
 }
 
 static bool IsElementAnchorOrArea(nsIContent* aContent) {
